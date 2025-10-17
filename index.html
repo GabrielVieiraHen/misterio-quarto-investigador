@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Mistério do Quarto do Investigador</title>
+    <style>
+        /* Estilos Gerais */
+        body { 
+            background-color: #1a1a2e; 
+            font-family: 'Courier New', Courier, monospace; 
+            color: #f0f0f0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            flex-direction: column; 
+            padding-top: 20px; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+
+        .titulo-jogo {
+            color: #e0e0ff;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            border-bottom: 2px solid #5a5a8a;
+            padding-bottom: 10px;
+        }
+
+        /* Contêiner principal que segura o cenário e o desktop */
+        #container-principal { 
+            position: relative; 
+            width: 800px; 
+            height: 600px; 
+            margin-bottom: 20px;
+        }
+        
+        /* Controlo de áudio */
+        #controlo-audio {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999;
+            background-color: rgba(0,0,0,0.7);
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        #controlo-audio svg { 
+            width: 24px; 
+            height: 24px; 
+            stroke: white; 
+            cursor: pointer; 
+        }
+        #icon-som-off { 
+            display: none; 
+        }
+        #volume-slider { 
+            width: 80px; 
+        }
+
+        /* Cenário Principal do Jogo */
+        #cenario-jogo { 
+            position: relative; 
+            width: 100%; 
+            height: 100%; 
+            background-image: url('quarto_investigador.png'); /* AGORA SEM PASTA */
+            background-size: cover; 
+            border: 3px solid #5a5a8a; 
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        /* Áreas Clicáveis Invisíveis */
+        .objeto { 
+            position: absolute; 
+            cursor: pointer; 
+            /* REMOVI O FUNDO COLORIDO - AGORA SÃO INVISÍVEIS */
+        }
+        
+        .objeto:hover {
+            background-color: rgba(255,255,255,0.1); /* Só aparece no hover */
+        }
+        
+        #computador { 
+            width: 148px; 
+            height: 115px; 
+            top: 320px; 
+            left: 238px; 
+        }
+        #quadro-cortica { 
+            width: 250px; 
+            height: 249px; 
+            top: 172px; 
+            left: 507px; 
+        }
+        #gaveteiro { 
+            width: 192px; 
+            height: 101px; 
+            top: 501px; 
+            left: 35px; 
+        }
+        #telefone { 
+            width: 71px; 
+            height: 50px; 
+            top: 411px; 
+            left: 408px; 
+        }
+        #caixa-trancada { 
+            width: 92px; 
+            height: 123px; 
+            top: 473px; 
+            left: 432px; 
+        }
+
+        /* Estilos para o Balão de Fala */
+        #bolha-fala {
+            position: absolute; 
+            background: white; 
+            color: black; 
+            border: 2px solid black; 
+            border-radius: 10px;
+            padding: 10px 15px; 
+            max-width: 220px; 
+            text-align: center; 
+            font-size: 16px; 
+            line-height: 1.4;
+            z-index: 200; 
+            opacity: 0; 
+            transform: scale(0.9) translateY(10px); 
+            visibility: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        #bolha-fala.visivel { 
+            opacity: 1; 
+            transform: scale(1) translateY(0); 
+            visibility: visible; 
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s 0s; 
+        }
+
+        /* Estilos do Ambiente de Trabalho Virtual */
+        #desktop-view { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: #008080; 
+            border: 3px solid #5a5a8a; 
+            display: none; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+        .desktop-icon { 
+            width: 80px; 
+            text-align: center; 
+            color: white; 
+            cursor: pointer; 
+            margin-bottom: 20px; 
+        }
+        .desktop-icon svg { 
+            width: 50px; 
+            height: 50px; 
+        }
+        .desktop-icon p { 
+            font-size: 14px; 
+            margin: 5px 0 0 0; 
+            word-wrap: break-word; 
+        }
+        #taskbar { 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 40px; 
+            background-color: #c0c0c0; 
+            border-top: 2px solid #ffffff; 
+            display: flex; 
+            align-items: center; 
+        }
+        #btn-desligar { 
+            width: 80px; 
+            height: 30px; 
+            margin-left: 5px; 
+            background-color: #c0c0c0; 
+            border: 2px solid; 
+            border-color: #ffffff #808080 #808080 #ffffff; 
+            font-weight: bold; 
+            font-family: inherit; 
+            cursor: pointer; 
+        }
+
+        /* Estilos Genéricos para Janelas Modais */
+        .modal-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0, 0, 0, 0.75); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 100; 
+        }
+        .modal-botoes { 
+            margin-top: 25px; 
+        }
+        .modal-botoes button { 
+            background-color: transparent; 
+            font-family: inherit; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin: 0 10px; 
+            transition: all 0.2s ease-in-out; 
+        }
+
+        /* Janela de Senha do Computador */
+        #modal-senha { 
+            background-color: #0d0d0d; 
+            color: #00ff41; 
+            padding: 25px; 
+            border: 3px solid #00ff41; 
+            box-shadow: 0 0 25px rgba(0, 255, 65, 0.5); 
+            width: 400px; 
+            text-align: center; 
+        }
+        #modal-senha button { 
+            border: 2px solid #00ff41; 
+            color: #00ff41; 
+            padding: 10px 20px; 
+        }
+        #modal-senha button:hover { 
+            background-color: #00ff41; 
+            color: #0d0d0d; 
+        }
+        #modal-senha h3 { 
+            margin-top: 0; 
+            margin-bottom: 20px; 
+            border-bottom: 1px dashed #00ff41; 
+            padding-bottom: 10px; 
+            text-transform: uppercase; 
+        }
+        #modal-senha label { 
+            font-size: 18px; 
+            margin-right: 10px; 
+        }
+        #modal-senha input { 
+            background-color: #000; 
+            border: 1px solid #00ff41; 
+            color: #00ff41; 
+            padding: 8px; 
+            font-size: 18px; 
+            width: 200px; 
+        }
+
+        /* Janela de Imagem do Quadro */
+        #modal-overlay-quadro { 
+            z-index: 90; 
+        }
+        #modal-quadro { 
+            background-color: #1a1a2e; 
+            border: 3px solid #5a5a8a; 
+            padding: 15px; 
+            max-width: 700px; 
+            box-shadow: 0 0 15px rgba(90, 90, 138, 0.5); 
+            text-align: center; 
+        }
+        #modal-quadro img { 
+            max-width: 100%; 
+            height: auto; 
+            display: block; 
+            margin-bottom: 15px; 
+        }
+        #modal-quadro button { 
+            border: 2px solid #5a5a8a; 
+            color: #f0f0f0; 
+            padding: 8px 15px; 
+        }
+        #modal-quadro button:hover { 
+            background-color: #5a5a8a; 
+            color: #f0f0f0; 
+        }
+
+        /* Janela do Relatório do Computador e Nota Final */
+        #modal-overlay-relatorio, #modal-overlay-final { 
+            z-index: 110; 
+        }
+        #modal-relatorio, #modal-final { 
+            background-color: #0d0d0d; 
+            color: #00ff41; 
+            padding: 20px; 
+            border: 3px solid #00ff41; 
+            width: 600px; 
+            height: 400px; 
+            text-align: left; 
+            overflow-y: auto; 
+        }
+        #modal-relatorio h4, #modal-final h4 { 
+            margin-top: 0; 
+            text-align: center; 
+        }
+        #modal-relatorio p, #modal-final p { 
+            white-space: pre-wrap; 
+        }
+        #modal-relatorio .modal-botoes, #modal-final .modal-botoes { 
+            text-align: center; 
+        }
+        #modal-relatorio button, #modal-final button { 
+            border: 2px solid #00ff41; 
+            color: #00ff41; 
+            padding: 10px 20px; 
+        }
+        #modal-relatorio button:hover, #modal-final button:hover { 
+            background-color: #00ff41; 
+            color: #0d0d0d; 
+        }
+
+        /* Janela da Fechadura do Gaveteiro */
+        #modal-overlay-gaveteiro { 
+            z-index: 90; 
+        }
+        #modal-gaveteiro { 
+            background-color: #333; 
+            border: 3px solid #777; 
+            padding: 25px; 
+            width: 350px; 
+            text-align: center; 
+            box-shadow: inset 0 0 10px #000; 
+        }
+        #modal-gaveteiro h4 { 
+            margin-top: 0; 
+            color: #fff; 
+        }
+        #modal-gaveteiro input { 
+            text-transform: uppercase; 
+            text-align: center; 
+            font-size: 20px; 
+            letter-spacing: 5px; 
+            padding: 5px; 
+            width: 200px; 
+        }
+        #modal-gaveteiro button { 
+            border: 2px solid #777; 
+            color: #fff; 
+            padding: 8px 15px; 
+        }
+        #modal-gaveteiro button:hover { 
+            background-color: #777; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="titulo-jogo">O Mistério do Quarto do Investigador</h1>
+
+    <div id="container-principal">
+        <div id="cenario-jogo">
+            <div id="computador" class="objeto" title="Computador"></div>
+            <div id="quadro-cortica" class="objeto" title="Quadro de Cortiça"></div>
+            <div id="gaveteiro" class="objeto" title="Gaveteiro"></div>
+            <div id="telefone" class="objeto" title="Telefone"></div>
+            <div id="caixa-trancada" class="objeto" title="Caixa Trancada"></div>
+            <div id="bolha-fala"></div>
+        </div>
+        <div id="desktop-view">
+            <div class="desktop-icon" id="icon-relatorio">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 2H14L20 8V20C20 21.1046 19.1046 22 18 22H6C4.89543 22 4 21.1046 4 20V4C4 2.89543 4.89543 2 6 2Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2V8H20" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 13H8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 17H8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <p>Relatorio_ Projeto_ Orion.txt</p>
+            </div>
+            <div class="desktop-icon" id="icon-lixeira">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6H5H21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <p>Lixeira</p>
+            </div>
+            <div id="taskbar"><button id="btn-desligar">Desligar</button></div>
+        </div>
+    </div>
+    
+    <!-- Modais que podem aparecer em qualquer ecrã -->
+    <div id="modal-overlay" class="modal-overlay"></div>
+    <div id="modal-overlay-quadro" class="modal-overlay"></div>
+    <div id="modal-overlay-relatorio" class="modal-overlay"></div>
+    <div id="modal-overlay-gaveteiro" class="modal-overlay"></div>
+    <div id="modal-overlay-final" class="modal-overlay"></div>
+
+    <!-- Controlo de Áudio -->
+    <div id="controlo-audio">
+        <svg id="icon-som-on" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.54 8.46C16.4816 9.40156 17.0084 10.6693 17.0084 11.995C17.0084 13.3207 16.4816 14.5884 15.54 15.53" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg id="icon-som-off" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 5L6 9H2V15H6L11 19V5Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 9L17 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 9L23 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <input type="range" id="volume-slider" min="0" max="100" value="50">
+    </div>
+
+    <!-- ÁUDIOS - MESMA PASTA DO HTML -->
+    <audio id="audio-ambiente" loop preload="auto">
+        <source src="ambiente_misterioso.mp3" type="audio/mp3">
+        Seu navegador não suporta áudio HTML5.
+    </audio>
+    
+    <audio id="audio-click" preload="auto">
+        <source src="clique_botao.mp3" type="audio/mp3">
+        Seu navegador não suporta áudio HTML5.
+    </audio>
+    
+    <audio id="audio-sucesso" preload="auto">
+        <source src="sucesso_desbloqueio.mp3" type="audio/mp3">
+        Seu navegador não suporta áudio HTML5.
+    </audio>
+    
+    <audio id="audio-erro" preload="auto">
+        <source src="erro_falha.mp3" type="audio/mp3">
+        Seu navegador não suporta áudio HTML5.
+    </audio>
+    
+    <audio id="audio-teclado" preload="auto">
+        <source src="teclado_digitando.mp3" type="audio/mp3">
+        Seu navegador não suporta áudio HTML5.
+    </audio>
+    
+    <audio id="audio-misterio" preload="auto">
+        <source src="telefone_chiado.mp3" type="audio/mp3">
+        Seu navegador não suporta áudio HTML5.
+    </audio>
+    
+    <audio id="audio-porta" preload="auto">
+        <source src="gaveta_abrindo.mp3" type="audio/mp3">
+        Seu navegador não suporta áudio HTML5.
+    </audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 1. ELEMENTOS DO JOGO ---
+            const cenarioJogo = document.getElementById('cenario-jogo');
+            const computador = document.getElementById('computador');
+            const quadroCortica = document.getElementById('quadro-cortica');
+            const gaveteiro = document.getElementById('gaveteiro');
+            const telefone = document.getElementById('telefone');
+            const caixaTrancada = document.getElementById('caixa-trancada');
+            const desktopView = document.getElementById('desktop-view');
+            const bolhaFala = document.getElementById('bolha-fala');
+            
+            // Re-populando o HTML das modais - CORRIGIDO OS CAMINHOS DAS IMAGENS
+            document.getElementById('modal-overlay').innerHTML = `<div id="modal-senha"><h3>TERMINAL DE ACESSO - PROJETO ORION</h3><label for="input-senha-computador">SENHA:</label><input type="password" id="input-senha-computador" /><div class="modal-botoes"><button id="btn-entrar-computador">ENTRAR</button><button id="btn-cancelar-computador">CANCELAR</button></div></div>`;
+            document.getElementById('modal-overlay-quadro').innerHTML = `<div id="modal-quadro"><img src="quadro_cortica.png" alt="Quadro de Cortiça"><div class="modal-botoes"><button id="btn-fechar-quadro">FECHAR</button></div></div>`;
+            document.getElementById('modal-overlay-relatorio').innerHTML = `<div id="modal-relatorio"><h4>FICHEIRO: Relatorio_Projeto_Orion.txt</h4><p>ENTRADA: 23/10/1995\n\nO Projeto Orion está comprometido. A toupeira está dentro da organização.\n\nAs minhas suspeitas recaem sobre "O Corvo". A sua afiliação principal é a chave para tudo.\n\nDeixei os documentos físicos no local de sempre, trancados. A segurança é a palavra-chave.</p><div class="modal-botoes"><button id="btn-fechar-relatorio">FECHAR</button></div></div>`;
+            document.getElementById('modal-overlay-gaveteiro').innerHTML = `<div id="modal-gaveteiro"><h4>FECHADURA DE COMBINAÇÃO</h4><input type="text" id="input-senha-gaveteiro" maxlength="5" /><div class="modal-botoes"><button id="btn-abrir-gaveteiro">ABRIR</button><button id="btn-cancelar-gaveteiro">AFASTAR</button></div></div>`;
+            document.getElementById('modal-overlay-final').innerHTML = `<div id="modal-final"><h4>NOTA FINAL</h4><p>Se estás a ler isto, conseguiste. O Projeto Orion é uma conspiração dentro da agência. 'ARGUS' é o nome deles. Eles controlam tudo.\n\nLevei as provas originais comigo. Desapareci para ganhar tempo e expô-los de fora. Esta chave que encontraste... não era para a caixa. Era a chave da minha mota. Já estou longe.\n\nO teu trabalho está feito. Obrigado.\n\nFIM DE JOGO</p><div class="modal-botoes"><button id="btn-fechar-final">TERMINAR</button></div></div>`;
+
+            const modalOverlay = document.getElementById('modal-overlay'), 
+                  modalOverlayQuadro = document.getElementById('modal-overlay-quadro'), 
+                  modalOverlayRelatorio = document.getElementById('modal-overlay-relatorio'), 
+                  modalOverlayGaveteiro = document.getElementById('modal-overlay-gaveteiro'), 
+                  modalOverlayFinal = document.getElementById('modal-overlay-final');
+            
+            const inputSenhaComputador = document.getElementById('input-senha-computador'), 
+                  btnEntrarComputador = document.getElementById('btn-entrar-computador'), 
+                  btnCancelarComputador = document.getElementById('btn-cancelar-computador');
+            
+            const btnFecharQuadro = document.getElementById('btn-fechar-quadro'), 
+                  btnFecharRelatorio = document.getElementById('btn-fechar-relatorio'), 
+                  btnFecharFinal = document.getElementById('btn-fechar-final');
+            
+            const inputSenhaGaveteiro = document.getElementById('input-senha-gaveteiro'), 
+                  btnAbrirGaveteiro = document.getElementById('btn-abrir-gaveteiro'), 
+                  btnCancelarGaveteiro = document.getElementById('btn-cancelar-gaveteiro');
+            
+            const iconRelatorio = document.getElementById('icon-relatorio'), 
+                  iconLixeira = document.getElementById('icon-lixeira'), 
+                  btnDesligar = document.getElementById('btn-desligar');
+            
+            // Elementos de Áudio
+            const controloAudio = document.getElementById('controlo-audio'), 
+                  iconSomOn = document.getElementById('icon-som-on'), 
+                  iconSomOff = document.getElementById('icon-som-off'), 
+                  volumeSlider = document.getElementById('volume-slider');
+            
+            const audioAmbiente = document.getElementById('audio-ambiente'), 
+                  audioClick = document.getElementById('audio-click'), 
+                  audioSucesso = document.getElementById('audio-sucesso'), 
+                  audioErro = document.getElementById('audio-erro'), 
+                  audioTeclado = document.getElementById('audio-teclado'), 
+                  audioMisterio = document.getElementById('audio-misterio'), 
+                  audioPorta = document.getElementById('audio-porta');
+            
+            const todosOsAudios = [audioAmbiente, audioClick, audioSucesso, audioErro, audioTeclado, audioMisterio, audioPorta];
+
+            // --- 2. ESTADO DO JOGO ---
+            const SENHA_COMPUTADOR = "132207", 
+                  SENHA_GAVETEIRO = "ARGUS";
+            
+            let computadorDesbloqueado = false, 
+                gavetaAberta = false, 
+                possuiChave = false;
+            
+            let bolhaTimeout = null, 
+                musicaIniciada = false, 
+                isMuted = false;
+
+            // --- 3. FUNÇÕES DE LÓGICA ---
+            function ligarComputador() { 
+                cenarioJogo.style.display = 'none'; 
+                desktopView.style.display = 'block'; 
+                tocarSom(audioTeclado);
+            }
+            
+            function desligarComputador() { 
+                desktopView.style.display = 'none'; 
+                cenarioJogo.style.display = 'block'; 
+                mostrarBolha('Você desliga o computador.', computador); 
+                tocarSom(audioClick);
+            }
+            
+            function esconderBolha() { 
+                clearTimeout(bolhaTimeout); 
+                if (bolhaFala.classList.contains('visivel')) { 
+                    bolhaFala.classList.remove('visivel'); 
+                } 
+            }
+            
+            function mostrarBolha(texto, elemento) {
+                esconderBolha();
+                bolhaFala.textContent = texto; 
+                bolhaFala.style.display = 'block'; 
+                bolhaFala.classList.add('visivel');
+                let finalTop = elemento.offsetTop - bolhaFala.offsetHeight - 15, 
+                    finalLeft = elemento.offsetLeft + (elemento.offsetWidth / 2) - (bolhaFala.offsetWidth / 2);
+                if (finalTop < 10) { finalTop = elemento.offsetTop + elemento.offsetHeight + 15; }
+                if (finalLeft < 10) { finalLeft = 10; }
+                if (finalLeft + bolhaFala.offsetWidth > cenarioJogo.offsetWidth - 10) { finalLeft = cenarioJogo.offsetWidth - bolhaFala.offsetWidth - 10; }
+                bolhaFala.style.top = `${finalTop}px`; 
+                bolhaFala.style.left = `${finalLeft}px`;
+                bolhaTimeout = setTimeout(esconderBolha, 4000);
+            }
+
+            // --- FUNÇÕES DE ÁUDIO ---
+            function tocarSom(som) {
+                if (!isMuted && som) {
+                    som.currentTime = 0;
+                    som.play().catch(e => {
+                        console.log("Áudio não pôde ser reproduzido:", e);
+                    });
+                }
+            }
+            
+            function iniciarMusica() {
+                if (!musicaIniciada && audioAmbiente) {
+                    audioAmbiente.volume = volumeSlider.value / 100;
+                    audioAmbiente.play().then(() => {
+                        musicaIniciada = true;
+                    }).catch(e => {
+                        console.log("Música de fundo não pôde iniciar:", e);
+                    });
+                }
+            }
+            
+            function ajustarVolume() {
+                const volume = volumeSlider.value / 100;
+                todosOsAudios.forEach(audio => {
+                    if (audio) audio.volume = volume;
+                });
+            }
+            
+            function toggleMudo() {
+                isMuted = !isMuted;
+                todosOsAudios.forEach(audio => {
+                    if (audio) audio.muted = isMuted;
+                });
+                
+                iconSomOn.style.display = isMuted ? 'none' : 'block';
+                iconSomOff.style.display = isMuted ? 'block' : 'none';
+            }
+
+            // --- 4. INICIALIZAÇÃO DO ÁUDIO ---
+            function inicializarAudio() {
+                ajustarVolume();
+                
+                // Iniciar música na primeira interação
+                document.body.addEventListener('click', function iniciarUmaVez() {
+                    iniciarMusica();
+                    document.body.removeEventListener('click', iniciarUmaVez);
+                });
+                
+                // Event listeners para controles de áudio
+                controloAudio.addEventListener('click', (e) => {
+                    if (e.target.closest('svg')) {
+                        toggleMudo();
+                    }
+                });
+                
+                volumeSlider.addEventListener('input', ajustarVolume);
+            }
+
+            // --- 5. EVENT LISTENERS ---
+            document.addEventListener('DOMContentLoaded', inicializarAudio);
+            
+            cenarioJogo.addEventListener('click', (e) => { 
+                if (e.target === cenarioJogo) { 
+                    esconderBolha(); 
+                } 
+            });
+            
+            // Computador
+            computador.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                if (!computadorDesbloqueado) { 
+                    modalOverlay.style.display = 'flex'; 
+                    inputSenhaComputador.focus(); 
+                } else { 
+                    ligarComputador(); 
+                } 
+            });
+            
+            btnEntrarComputador.addEventListener('click', () => { 
+                if (inputSenhaComputador.value === SENHA_COMPUTADOR) { 
+                    tocarSom(audioSucesso); 
+                    computadorDesbloqueado = true; 
+                    modalOverlay.style.display = 'none'; 
+                    inputSenhaComputador.value = ''; 
+                    ligarComputador(); 
+                } else { 
+                    tocarSom(audioErro); 
+                    inputSenhaComputador.value = ''; 
+                    inputSenhaComputador.focus(); 
+                    const modalSenha = document.getElementById('modal-senha'); 
+                    modalSenha.style.borderColor = 'red'; 
+                    setTimeout(() => { modalSenha.style.borderColor = '#00ff41'; }, 500); 
+                } 
+            });
+            
+            btnCancelarComputador.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                modalOverlay.style.display = 'none'; 
+                mostrarBolha('Você se afasta do computador.', computador); 
+            });
+            
+            // Desktop
+            iconRelatorio.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                modalOverlayRelatorio.style.display = 'flex'; 
+            });
+            
+            btnFecharRelatorio.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                modalOverlayRelatorio.style.display = 'none'; 
+            });
+            
+            iconLixeira.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                alert('A lixeira está vazia.'); 
+            });
+            
+            btnDesligar.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                desligarComputador(); 
+            });
+
+            // Quadro
+            quadroCortica.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                modalOverlayQuadro.style.display = 'flex'; 
+            });
+            
+            btnFecharQuadro.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                modalOverlayQuadro.style.display = 'none'; 
+                mostrarBolha('Você se afasta do quadro.', quadroCortica); 
+            });
+
+            // Gaveteiro
+            gaveteiro.addEventListener('click', (e) => { 
+                tocarSom(audioClick); 
+                if (!gavetaAberta) { 
+                    modalOverlayGaveteiro.style.display = 'flex'; 
+                    inputSenhaGaveteiro.focus(); 
+                } else { 
+                    mostrarBolha('A gaveta está aberta. Você já pegou a pequena chave de metal.', e.currentTarget); 
+                } 
+            });
+            
+            btnAbrirGaveteiro.addEventListener('click', () => { 
+                if (inputSenhaGaveteiro.value.toUpperCase() === SENHA_GAVETEIRO) { 
+                    tocarSom(audioSucesso); 
+                    tocarSom(audioPorta);
+                    gavetaAberta = true; 
+                    possuiChave = true; 
+                    modalOverlayGaveteiro.style.display = 'none'; 
+                    mostrarBolha('COMBINAÇÃO CORRETA. A gaveta destrancou. Dentro, você encontra uma pequena chave de metal.', gaveteiro); 
+                    inputSenhaGaveteiro.value = ''; 
+                } else { 
+                    tocarSom(audioErro); 
+                    inputSenhaGaveteiro.value = ''; 
+                    inputSenhaGaveteiro.focus(); 
+                } 
+            });
+            
+            btnCancelarGaveteiro.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                modalOverlayGaveteiro.style.display = 'none'; 
+                mostrarBolha('Você se afasta do gaveteiro.', gaveteiro); 
+            });
+            
+            // Telefone
+            telefone.addEventListener('click', (e) => { 
+                tocarSom(audioMisterio); 
+                mostrarBolha('(*Chiado...*) ...sala 13, às 22h. É urgente. O 07 foi comprometido. (*Bip!*).', e.currentTarget); 
+            });
+
+            // Caixa Trancada
+            caixaTrancada.addEventListener('click', (e) => {
+                tocarSom(audioClick);
+                if (possuiChave) {
+                    mostrarBolha('Você usa a pequena chave de metal e a caixa abre...', e.currentTarget);
+                    setTimeout(() => { 
+                        tocarSom(audioSucesso); 
+                        tocarSom(audioPorta);
+                        modalOverlayFinal.style.display = 'flex'; 
+                    }, 1000);
+                } else {
+                    mostrarBolha('É uma pequena caixa de madeira com uma fechadura. Parece precisar de uma chave pequena.', e.currentTarget);
+                }
+            });
+            
+            btnFecharFinal.addEventListener('click', () => { 
+                tocarSom(audioClick); 
+                modalOverlayFinal.style.display = 'none'; 
+            });
+        });
+    </script>
+</body>
+</html>
